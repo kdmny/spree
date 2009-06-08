@@ -1,9 +1,21 @@
 Factory.define :order do |f|
-  f.shipments do |shipments|
-    [shipments.association(:shipment)]
-  end
+  #f.shipments do |shipments|
+  #  [shipments.association(:shipment)]
+  #end
+end
+
+Factory.define :checkout do |f|
   f.association :bill_address, :factory => :address
   f.association :ship_address, :factory => :address
+  f.association :creditcard
+  f.association :order 
+end
+
+Factory.define :user do |f|
+  f.login { Factory.next(:name) }
+  f.email { Factory.next(:email) }
+  f.password "spree"
+  f.password_confirmation "spree"
 end
 
 Factory.define :shipment do |f|
@@ -67,9 +79,14 @@ Factory.sequence :name do |n|
   "Foo_#{n}"
 end
 
+Factory.sequence :email do |n|
+  "foo_#{n}@example.com"
+end
+
 Factory.define :creditcard do |f|
   f.verification_value 123
   f.month 12
   f.year 2013
   f.number 4111111111111111
+  f.association :address
 end

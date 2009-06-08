@@ -1,7 +1,7 @@
 class Order < ActiveRecord::Base  
-#  before_create :generate_order_number
   before_save :update_line_items 
   before_create :generate_token
+  before_create :create_checkout
   
   has_many :line_items, :dependent => :destroy, :attributes => true
   has_many :inventory_units
@@ -10,9 +10,11 @@ class Order < ActiveRecord::Base
   has_many :creditcard_payments
   belongs_to :user
   has_many :shipments, :dependent => :destroy
-  belongs_to :bill_address, :foreign_key => "bill_address_id", :class_name => "Address"
-  belongs_to :ship_address, :foreign_key => "ship_address_id", :class_name => "Address"
-  accepts_nested_attributes_for :ship_address, :bill_address
+
+  has_one :checkout
+  has_one :bill_address, :through => :checkout
+  has_one :ship_address, :through => :checkout   
+  has_one :email, :through => :checkout
   
   validates_associated :line_items, :message => "are not valid"
   validates_numericality_of :tax_amount
@@ -29,12 +31,6 @@ class Order < ActiveRecord::Base
   
   # attr_accessible is a nightmare with attachment_fu, so use attr_protected instead.
   attr_protected :ship_amount, :tax_amount, :item_total, :total, :user, :number, :ip_address, :checkout_complete, :state, :token
-
-  # for memory-only storage of creditcard details
-  attr_accessor :creditcard
-
-  # for storage of shipping method before it is saved in a shipment
-  attr_accessor :initial_shipping_method
 
   def to_param  
     self.number if self.number
@@ -214,5 +210,9 @@ class Order < ActiveRecord::Base
   
   def generate_token
     self.token = Authlogic::Random.friendly_token    
+  end
+  
+  def create_checkout
+    self.checkout = Checkout.create unless self.checkout
   end      
 end
